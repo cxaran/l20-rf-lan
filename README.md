@@ -4,6 +4,18 @@ Captura, guarda, edita y transmite códigos de controles de radiofrecuencia medi
 
 El proyecto trabaja con la variante de órdenes RF en DP201 y reportes en DP202, con lectura alternativa de DP2. El nombre comercial «L20» no garantiza el mismo hardware, firmware ni protocolo. Consulta [compatibilidad y protocolo](docs/PROTOCOLO.md).
 
+## Capturas
+
+Las imágenes muestran el modo demostración con datos sintéticos, sin credenciales ni capturas de controles personales.
+
+**Biblioteca y editor.** Selección de una captura guardada y consulta de su contenedor JSON.
+
+![Interfaz de L20 RF LAN en demostración, con la biblioteca y el editor JSON de un control de ejemplo](docs/interfaz.jpg)
+
+**Prueba e historial.** Ejemplo con cuatro repeticiones solicitadas. La demostración registra que no se envió ninguna señal al equipo.
+
+![Resultado de una prueba sintética con cuatro repeticiones y su registro en el historial](docs/demostracion.jpg)
+
 ## Requisitos
 
 - Windows con Python 3.10 o superior y acceso a Internet para instalar dependencias.
