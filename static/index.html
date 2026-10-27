@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>L20 RF LAN · 1.0.0</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 44 44" fill="none" aria-hidden="true"><path d="M9 16a19 19 0 0 1 26 0M14 22a12 12 0 0 1 16 0M19 28a5 5 0 0 1 6 0" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="22" cy="34" r="2" fill="currentColor"/></svg>
+      <div><div class="brand-title"><h1>L20 RF LAN</h1><span class="version-badge">v1.0.0</span></div><p>Captura y transmisión de controles RF</p></div>
+    </div>
+    <div class="header-tools"><div class="device-status"><span id="connection-dot" class="status-dot"></span><div><strong id="device-label">Sin configurar</strong><span id="device-detail">L20 · Tuya LAN</span></div><span id="demo-badge" class="badge" hidden>Demostración</span></div></div>
+  </header>
+
+  <main>
+    <section class="capture-bar" aria-labelledby="capture-heading">
+      <div class="capture-intro"><h2 id="capture-heading">Capturar un control</h2><p>Inicia la escucha y pulsa un botón del control cerca del L20.</p><p class="capture-caveat">El L20 puede reportar una captura anterior. Comprueba el botón al probarla.</p></div>
+      <div class="capture-controls"><div class="frequency-field"><label for="frequency">Frecuencia</label><select id="frequency"><option value="0">Automática</option><option value="433.92">433.92 MHz</option></select></div><button id="start-capture" class="primary" type="button"><span aria-hidden="true">＋</span> Capturar · 30 s</button><button id="cancel-capture" class="quiet" type="button" hidden>Cancelar captura</button></div>
+      <div id="capture-progress" class="capture-progress" hidden><div class="progress-track"><span id="progress-fill"></span></div><p id="capture-progress-text" role="status"></p></div>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="setup-guide" class="setup-guide" hidden><strong>Configura tu L20 para capturar y transmitir.</strong><p>Ejecuta <code>python l20.py configure</code> en la carpeta de la aplicación con tu cuenta de Windows y reinicia el servidor local.</p></div>
+    <div id="pending-capture" class="pending-capture" hidden><span>Hay una captura recibida en esta sesión. Tu edición se conserva.</span><button id="use-pending-capture" type="button" class="text-button">Cargar captura recibida</button></div>
+
+    <div class="workspace">
+      <aside class="library" aria-labelledby="library-heading">
+        <div class="section-title"><h2 id="library-heading">Mis capturas <span id="capture-count" class="count">0</span></h2><button id="new-draft" class="text-button" type="button">Nueva</button></div>
+        <div id="library-empty" class="library-empty"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="12" y="5" width="24" height="38" rx="7" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="17" r="4" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="31" r="4" stroke="currentColor" stroke-width="2"/></svg><p>Aún no hay capturas</p><span>Captura un botón de tu control o pega un código en el editor.</span></div>
+        <ul id="capture-list" class="capture-list" aria-label="Capturas guardadas"></ul>
+        <p class="library-footnote" id="library-footnote">Las capturas se guardan cifradas en este equipo.</p>
+      </aside>
+
+      <section class="editor" aria-labelledby="editor-heading">
+        <div class="editor-heading"><div><h2 id="editor-heading">Nueva captura</h2><p id="record-meta">Borrador sin guardar</p></div><span id="dirty-indicator" class="draft-badge">Borrador</span></div>
+        <form id="capture-form" novalidate>
+          <div class="field"><label for="capture-name">Nombre</label><input id="capture-name" name="name" maxlength="100" autocomplete="off" placeholder="Ej. Receptor · botón principal" required></div>
+          <div class="field"><label for="capture-notes">Notas <span class="optional">opcional</span></label><textarea id="capture-notes" name="notes" rows="2" maxlength="2000" placeholder="Control, botón, distancia o cualquier detalle útil."></textarea></div>
+          <div class="field code-field"><div class="code-label"><label for="capture-code" id="code-label">Código Base64</label><button id="toggle-json" class="text-button" type="button" aria-pressed="false">Ver JSON</button></div><textarea id="capture-code" name="code" rows="7" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="code-help" placeholder="El código recibido aparecerá aquí. También puedes pegar una captura."></textarea><p id="code-help" class="field-help">Conserva el código completo. Puedes editarlo y validarlo antes de guardar.</p></div>
+          <div id="code-summary" class="code-summary" hidden></div>
+          <div class="save-row"><button id="validate-code" class="secondary" type="button">Validar código</button><button id="save-capture" class="primary" type="submit">Guardar captura</button><span id="save-feedback" class="inline-feedback" aria-live="polite"></span></div>
+        </form>
+
+        <section class="test-section" aria-labelledby="test-heading">
+          <div><h3 id="test-heading">Probar transmisión</h3><p>Envía el código actual. La prueba puede accionar equipo físico.</p></div>
+          <div class="test-controls"><div class="repeat-field"><label for="test-times">Repeticiones</label><input id="test-times" type="number" min="1" max="6" step="1" value="1" inputmode="numeric"></div><div class="repeat-presets" role="group" aria-label="Elegir repeticiones sin transmitir"><button type="button" data-times="1" aria-pressed="true">1 base</button><button type="button" data-times="3" aria-pressed="false">3</button><button type="button" data-times="4" aria-pressed="false">4</button><button type="button" data-times="6" aria-pressed="false">6</button></div><button id="test-code" class="test-button" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 8 6-8 6V4Z" fill="currentColor"/></svg>Probar código</button></div>
+          <p class="comparison-hint">Compara una configuración cada vez. Más repeticiones pueden cambiar el comportamiento del receptor y no garantizan su funcionamiento.</p>
+          <div id="test-result" class="test-result" role="status" aria-live="polite" hidden><strong id="test-result-title"></strong><p id="test-result-detail"></p><dl id="test-timing" class="test-timing" aria-label="Tiempos de la prueba" hidden></dl><p class="physical-note">La respuesta del L20 no demuestra que el receptor haya funcionado. Compruébalo a la vista y registra el resultado en el historial.</p></div>
+        </section>
+
+        <section class="trial-history" aria-labelledby="history-heading">
+          <div class="history-heading"><h3 id="history-heading">Historial de pruebas <span id="trial-count" class="count">0</span></h3><span>Últimas 50</span></div>
+          <p class="history-help">Compara tiempos y anota cómo respondió el receptor. Un ACK confirma una respuesta del L20; el funcionamiento físico lo registras tú.</p>
+          <p id="history-warning" class="history-warning" role="status" hidden>No se pudo leer el historial guardado. Los ensayos de esta sesión pueden estar incompletos.</p>
+          <p id="trial-empty" class="trial-empty">Aún no hay pruebas. Cada vez que pulses «Probar código», el ensayo aparecerá aquí.</p>
+          <div id="trial-table-wrap" class="trial-table-wrap" hidden><table class="trial-table"><thead><tr><th scope="col">Control / hora</th><th scope="col">Repeticiones</th><th scope="col">Tiempo total</th><th scope="col">Resultado</th></tr></thead><tbody id="trial-list"></tbody></table></div>
+        </section>
+      </section>
+    </div>
+    <footer>L20 RF LAN · <span id="footer-host">Sin configurar</span><span>Registra el resultado físico de cada ensayo para comparar su fiabilidad.</span></footer>
+  </main>
+  <noscript><p class="notice error">Activa JavaScript para utilizar L20 RF LAN.</p></noscript>
+</body>
+</html>
