@@ -1,4 +1,4 @@
-"""CLI local del L20. Solo capture y send contactan con el dispositivo."""
+"""CLI del L20. setup puede consultar Tuya Cloud; capture/send contactan al L20."""
 from __future__ import annotations
 
 import argparse
@@ -7,13 +7,14 @@ import getpass
 import json
 import os
 from pathlib import Path
-import secrets
 import sys
 import threading
 import uuid
 
 import app
-from rf_device import MAX_FRAME, Radio, RfError, credential_info, seal, validate_code, validate_credentials
+from rf_device import MAX_FRAME, Radio, RfError, credential_info, validate_code
+from credential_store import CredentialStoreError, check_destination, write_credentials
+from credential_setup import SetupError, run_setup
 
 
 def emit(value):
@@ -31,32 +32,14 @@ def read_code(path):
 
 
 def configure(path, replace=False):
-    path = Path(path)
-    if path.exists() and not replace:
-        raise app.AppError("La credencial ya existe. Usa configure --replace para sustituirla.")
+    check_destination(path, replace)
     print("Configuración local. No se conecta al L20 ni se verifican las claves por red.")
     value = {"target_ip": input("IPv4 privada del L20: ").strip(),
              "target_mac": input("MAC del L20 (AA:BB:CC:DD:EE:FF): ").strip(),
              "device_id": getpass.getpass("device_id (oculto): "),
              "local_key": getpass.getpass("local_key de 16 bytes (oculta): "),
              "port": 6668, "version": "3.3"}
-    checked = validate_credentials(value)
-    value["target_ip"], value["target_mac"] = checked.target_ip, checked.target_mac
-    encrypted = seal(json.dumps(value, ensure_ascii=False).encode("utf-8"))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.parent / ("." + secrets.token_hex(16) + ".tmp")
-    try:
-        with temporary.open("xb") as stream:
-            stream.write(encrypted)
-            stream.flush()
-            os.fsync(stream.fileno())
-        if replace:
-            os.replace(temporary, path)
-        else:
-            # Windows rename refuses to overwrite, including a concurrent writer.
-            temporary.rename(path)
-    finally:
-        temporary.unlink(missing_ok=True)
+    write_credentials(path, value, replace)
     print("Credencial protegida con DPAPI. Ejecuta info para comprobar su lectura local.")
 
 
@@ -70,6 +53,10 @@ def parser_for_cli():
                         help="Archivo DPAPI (opción global, antes del subcomando)")
     parser.add_argument("--data", type=Path, help="Carpeta de capturas DPAPI (antes del subcomando)")
     commands = parser.add_subparsers(dest="command", required=True)
+    setup = commands.add_parser("setup", help="Asistente para obtener o importar credenciales del L20")
+    setup.add_argument("--from-file", type=Path, help="Importar un listado JSON existente sin acceder a la nube")
+    setup.add_argument("--replace", action="store_true", help="Sustituir la credencial local después de confirmar")
+    setup.add_argument("--demo", action="store_true", help="Recorrido sintético sin red ni archivos de credenciales")
     config = commands.add_parser("configure", help="Crear credencial DPAPI mediante preguntas locales")
     config.add_argument("--replace", action="store_true", help="Sustituir una credencial existente")
     commands.add_parser("info", help="Leer configuración local sin contactar con el L20")
@@ -106,7 +93,9 @@ def main(argv=None):
     directory = args.data or app.ROOT / "datos" / "capturas"
     library = app.Library(directory)
     try:
-        if args.command == "configure":
+        if args.command == "setup":
+            run_setup(args.credentials, from_file=args.from_file, replace=args.replace, demo=args.demo)
+        elif args.command == "configure":
             configure(args.credentials, args.replace)
         elif args.command == "info":
             info = credential_info(args.credentials)
@@ -166,10 +155,13 @@ def main(argv=None):
     except KeyboardInterrupt:
         print("Operación interrumpida. No se repetirá ninguna orden.", file=sys.stderr)
         return 130
-    except (app.AppError, RfError) as error:
+    except (app.AppError, RfError, SetupError, CredentialStoreError) as error:
         print(str(error), file=sys.stderr)
         if isinstance(error, RfError) and error.cleanup_sent is False:
             print("No se confirmó el envío de salida del aprendizaje.", file=sys.stderr)
+        return 2
+    except EOFError:
+        print("Entrada finalizada. No se repetirá ninguna operación.", file=sys.stderr)
         return 2
     except (OSError, UnicodeError):
         print("No se pudo leer o escribir el archivo local. Comprueba ruta, permisos y formato; no se sobrescriben exportaciones.", file=sys.stderr)

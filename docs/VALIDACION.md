@@ -10,7 +10,7 @@ El repositorio se prepara para que otra persona configure su propio destino. No 
 
 ## Comprobación del software
 
-Se ejecutaron 64 pruebas automatizadas en un entorno virtual nuevo con Python 3.11: 35 del transporte RF, 11 de la aplicación y 18 de la consola. Se comprobó también `Instalar.ps1` en ese entorno limpio.
+El conjunto actual de 100 pruebas automatizadas pasa en Windows con Python 3.11: 35 del transporte RF, 11 de la aplicación, 18 de la consola, 5 del almacenamiento de credenciales, 14 del asistente y 17 de su integración. El entorno se preparó con `Instalar.ps1`, cuya instalación se comprobó desde un entorno limpio.
 
 Las pruebas del repositorio emplean datos sintéticos, conexiones al dispositivo simuladas y almacenamiento temporal. Cubren componentes como validación de códigos, cifrado DPAPI, formato de trama, lectura fragmentada, errores, persistencia, revisiones, API local y prevención de reenvíos dentro de una sesión.
 
@@ -27,6 +27,22 @@ Se comprobó además en el navegador el flujo de demostración: capturar, guarda
 ![Demostración de la interfaz: cuatro repeticiones solicitadas, orden no enviada e historial sin observación física](demostracion.jpg)
 
 Al preparar esta adaptación genérica no se han realizado nuevas capturas ni transmisiones físicas. Una prueba automatizada aprobada demuestra el comportamiento cubierto por esa prueba, no apertura o cierre del portón.
+
+## Alcance del asistente de configuración
+
+El asistente propio incorpora obtención desde Tuya Cloud, importación de un archivo existente y entrada manual. La revisión de esta ampliación no realiza autenticación con una cuenta Cloud real ni nuevas pruebas físicas del L20. La compatibilidad con permisos, servicios y datos de una cuenta concreta debe comprobarse en esa cuenta.
+
+Puedes ensayar el recorrido sintético localmente:
+
+```powershell
+.\.venv\Scripts\python.exe .\l20.py setup --demo
+```
+
+Ese modo no consulta Tuya, no contacta con el L20 y no guarda credenciales. Permite revisar el diálogo sin introducir secretos reales. No acredita una obtención exitosa de claves desde la nube.
+
+Las pruebas verifican selección por índice con ID enmascarado, entrada oculta de secretos, validación del destino y perfil LAN, confirmación antes del guardado DPAPI, ausencia de archivos Cloud nuevos en texto claro y conservación del JSON importado sin cambios. También cubren cancelación, rechazo de JSON ambiguos, preservación de una configuración anterior ante fallos y tratamiento seguro de errores o tiempos de espera del proceso Cloud. Origen y destino no pueden representar el mismo archivo, incluso mediante un hardlink y aunque se indique `--replace`.
+
+Se ejecutaron además procesos reales de consola: el lanzador PowerShell en modo demostración y una importación con selección entre dos dispositivos sintéticos. El archivo importado quedó intacto y el destino DPAPI contenía solo los seis campos LAN esperados. El canal del proceso Cloud se comprobó con un SDK simulado, sin red. Ninguna de estas comprobaciones utiliza una cuenta Tuya real. Las capturas de interfaz anteriores documentan la web de demostración, no una sesión Cloud.
 
 ## Verificación de otra instalación
 

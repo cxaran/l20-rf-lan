@@ -12,3 +12,8 @@ datos-demo/
 .env.*
 !*.example
 dist/
+# TinyTuya exports may contain Cloud credentials, LAN keys or device inventory.
+tinytuya.json
+devices.json
+tuya-raw.json
+snapshot.json

@@ -1,6 +1,6 @@
 # L20 RF LAN para Windows
 
-Captura, guarda, edita y transmite códigos de controles de radiofrecuencia mediante un L20 compatible con Tuya LAN 3.3. Incluye una interfaz web local y una consola. Las credenciales y las capturas se guardan cifradas con Windows DPAPI.
+Captura, guarda, edita y transmite códigos de controles de radiofrecuencia mediante un L20 compatible con Tuya LAN 3.3. Incluye una interfaz web local, una consola y un asistente de configuración. Las credenciales LAN y las capturas se guardan cifradas con Windows DPAPI.
 
 El proyecto trabaja con la variante de órdenes RF en DP201 y reportes en DP202, con lectura alternativa de DP2. El nombre comercial «L20» no garantiza el mismo hardware, firmware ni protocolo. Consulta [compatibilidad y protocolo](docs/PROTOCOLO.md).
 
@@ -18,10 +18,10 @@ Las imágenes muestran el modo demostración con datos sintéticos, sin credenci
 
 ## Requisitos
 
-- Windows con Python 3.10 o superior y acceso a Internet para instalar dependencias.
+- Windows con Python 3.10 o superior y acceso a Internet para instalar dependencias y, si eliges esa opción, consultar Tuya Cloud durante la configuración.
 - Un L20 ya configurado en su aplicación y compatible con el protocolo indicado.
 - PC y L20 en la misma subred local, sin aislamiento entre clientes. La PC puede usar Ethernet o Wi-Fi. La banda admitida por el L20 depende de su hardware; comprueba si requiere Wi-Fi de 2.4 GHz.
-- IPv4 privada, MAC, `device_id` y `local_key` de tu propio equipo. El proyecto no obtiene las credenciales de Tuya por sí mismo.
+- IPv4 privada y MAC de tu propio equipo. El asistente puede obtener `device_id` y `local_key` desde tu proyecto de Tuya Cloud, importarlos de un archivo existente o pedirlos manualmente.
 
 ## Inicio rápido
 
@@ -29,11 +29,18 @@ Abre PowerShell dentro de esta carpeta y ejecuta:
 
 ```powershell
 .\Instalar.ps1
-.\.venv\Scripts\python.exe .\l20.py configure
+.\IniciarAsistente.cmd
 .\Iniciar.cmd
 ```
 
-`configure` solicita IP y MAC, y después `device_id` y `local_key` con entrada oculta. No incluyas secretos en los argumentos. Guarda la configuración en `.private/l20.dpapi`. Si todavía no tienes las claves, sigue [la preparación y obtención de credenciales](docs/USO.md#preparar-el-equipo-y-las-credenciales).
+El asistente ofrece tres opciones: obtener las claves desde Tuya Cloud, importar un `devices.json` existente o introducirlas manualmente. Después pide IP y MAC y confirma antes de guardar `.private/l20.dpapi`. Los secretos se solicitan con entrada oculta; no los incluyas en argumentos. Las claves API de la nube solo se usan en memoria. La [guía del asistente](docs/USO.md#asistente-de-configuración) explica cómo preparar el proyecto de Tuya, vincular tu aplicación y elegir la región. Si la web ya estaba abierta, ciérrala con `Ctrl+C` antes de configurar y vuelve a iniciarla después para que lea la nueva credencial.
+
+También puedes abrir el asistente desde consola o ensayarlo sin red ni escritura de credenciales:
+
+```powershell
+.\.venv\Scripts\python.exe .\l20.py setup
+.\.venv\Scripts\python.exe .\l20.py setup --demo
+```
 
 La web se abre en [http://127.0.0.1:58745](http://127.0.0.1:58745). Inicia una captura, pulsa un botón del control cerca del L20, asigna un nombre y guarda. Selecciona una captura para editar su nombre, notas o código, y guarda los cambios. **Probar código** transmite el contenido actual y puede accionar el equipo. Comienza con una repetición y comprueba físicamente el resultado.
 
@@ -75,4 +82,4 @@ En la instalación que motivó este proyecto se informó apertura/cierre con res
 
 Las rutas predeterminadas son `.private/l20.dpapi` para la configuración y `datos/capturas/` para la biblioteca. DPAPI vincula los archivos a la cuenta y al entorno de Windows que los creó. `export` produce texto sensible sin cifrar: úsalo solo cuando necesites editar o trasladar una captura y conserva el archivo fuera del repositorio público.
 
-La web escucha únicamente en `127.0.0.1`; el navegador habla con el servidor local y la PC se conecta al L20 por LAN. No se ofrece acceso web remoto ni autenticación para usuarios remotos.
+La web escucha únicamente en `127.0.0.1`; el navegador habla con el servidor local y la PC se conecta al L20 por LAN. La opción Cloud del asistente consulta Tuya explícitamente durante la configuración; capturar y transmitir después utiliza la credencial LAN guardada. No se ofrece acceso web remoto ni autenticación para usuarios remotos.

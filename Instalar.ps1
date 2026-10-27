@@ -14,4 +14,4 @@ if (-not (Test-Path -LiteralPath $taskPython)) {
 if ($LASTEXITCODE -ne 0) { throw 'Se necesita Python 3.10 o posterior.' }
 & $taskPython -m pip install -r (Join-Path $PSScriptRoot 'requirements.txt')
 if ($LASTEXITCODE -ne 0) { throw 'No se pudieron instalar las dependencias. Comprueba la conexión a Internet.' }
-Write-Host 'Instalación terminada. Configura con .\.venv\Scripts\python.exe l20.py configure, o abre Iniciar.cmd -Demo.'
+Write-Host 'Instalación terminada. Abre IniciarAsistente.cmd para configurar el L20, o Iniciar.cmd -Demo para ver la interfaz sin equipo.'

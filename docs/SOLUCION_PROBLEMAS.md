@@ -17,13 +17,38 @@
 
 | Mensaje o problema | Acción |
 | --- | --- |
-| Credencial inválida o Windows no puede descifrar | Usa la misma cuenta y entorno de Windows que creó el archivo. Si necesitas reconfigurar, ejecuta `configure --replace`. |
-| No existe la configuración | Ejecuta `configure`. Para una ruta alternativa usa `--credentials RUTA` antes del subcomando. |
+| Credencial inválida o Windows no puede descifrar | Usa la misma cuenta y entorno de Windows que creó el archivo. Si necesitas reconfigurar, ejecuta `setup --replace`. |
+| No existe la configuración | Ejecuta `setup` o abre `IniciarAsistente.cmd`. Para una ruta alternativa usa `--credentials RUTA` antes del subcomando. |
 | MAC no corresponde al L20 | Verifica la reserva DHCP y la MAC en el router. La IP podría pertenecer ahora a otro equipo. Corrige la configuración; no sustituyas la MAC a ciegas. |
 | No se pudo comprobar ARP | Comprueba que PC y L20 estén en la misma subred directa, sin aislamiento Wi-Fi, red de invitados, VPN o VLAN que los separe. |
 | No se valida el descifrado | Revisa `device_id`, clave local vigente y que el dispositivo utilice realmente Tuya 3.3. Si se volvió a emparejar, obtén de nuevo sus datos. |
 
-El `device_id` es el identificador del dispositivo y la `local_key` es su clave local. No introduzcas el Access ID o Access Secret del proyecto de Tuya en su lugar. Para problemas al obtenerlos consulta el [asistente oficial del proyecto TinyTuya](https://github.com/jasonacox/tinytuya/blob/v1.20.0/README.md#setup-wizard---getting-local-keys).
+El `device_id` es el identificador del dispositivo y la `local_key` es su clave local. Access ID y Access Secret identifican y autentican el proyecto de Tuya Cloud; pertenecen a la opción Cloud del asistente, no a la configuración LAN. Consulta la [guía del asistente integrado](USO.md#asistente-de-configuración).
+
+## Asistente y Tuya Cloud
+
+| Síntoma | Qué revisar |
+| --- | --- |
+| No se escribe nada al introducir un secreto | Es normal: Access ID, Access Secret y los identificadores o claves solicitados con entrada oculta no muestran caracteres en pantalla. No pases esos valores como argumentos. |
+| Autenticación o firma inválida | Comprueba que Access ID y Access Secret pertenezcan al mismo proyecto y estén completos. No uses la contraseña de la aplicación ni la `local_key` en esos campos. |
+| Permiso denegado | Verifica cuenta vinculada, servicios suscritos y autorización de las APIs para ese proyecto. Ver el L20 en el portal no acredita todos los permisos de consulta. |
+| Servicio o periodo de prueba vencido | Revisa el estado del plan de IoT Core, sus cuotas y servicios en el portal. Las condiciones dependen de la cuenta; el asistente no renueva ni compra planes. |
+| No se pudo obtener la lista Cloud dentro del plazo | La consulta tiene un límite de 20 segundos. El diagnóstico también agrupa rechazos de Tuya sin exponer su respuesta completa: revisa Internet, región, permisos y vinculación antes de iniciar otra consulta manual. No se guarda una configuración cuando falla la obtención. |
+| No aparece el L20 en la selección | Revisa que vinculaste la misma cuenta de la aplicación y que la región Cloud corresponda al centro de datos donde ves el equipo. Se requiere un registro con identificador y clave local válidos. |
+| Región no admitida | Usa uno de los códigos `cn`, `us`, `us-e`, `eu`, `eu-w`, `in` o `sg`. Selecciona el que corresponda a tu cuenta, sin inferirlo solo por tu ubicación. |
+| El archivo importado no produce dispositivos válidos | Revisa que sea JSON de dispositivos con campos `id`/`key` o `device_id`/`local_key`. Un archivo que solo contiene claves API Cloud no equivale a un archivo de dispositivos. |
+| La configuración ya existe | Si quieres sustituirla, inicia `setup --replace` y confirma el nuevo guardado. Para conservarla, cancela o usa otra ruta global de credenciales. |
+| El origen y el destino deben ser distintos | Conserva el JSON importado como origen y elige otro archivo para la configuración DPAPI. `--replace` tampoco permite sobrescribir la fuente ni un alias del mismo archivo. |
+| Tras la demostración sigue sin configurar | `setup --demo` no guarda credenciales. Inicia `setup` sin `--demo` para configurar tu equipo. |
+| Se canceló la confirmación de guardado | La respuesta predeterminada es `N`. Solo se guarda cuando confirmas con `s`. |
+| El asistente guardó, pero la web sigue «Sin configurar» | Cierra el servidor web con `Ctrl+C` y vuelve a abrir `Iniciar.cmd` para que lea la credencial nueva. |
+| Se intenta usar `--demo` con `--from-file` | Son recorridos distintos. Ejecuta la demostración sola; para importar tu archivo, omite `--demo`. |
+
+Para vinculación y región consulta [Link Devices de Tuya](https://developer.tuya.com/en/docs/iot/link-devices?id=Ka471nu1sfmkl); para permisos, [Manage API Services](https://developer.tuya.com/en/docs/iot/applying-for-api-group-permissions?id=Ka6vf012u6q76). Los nombres de menús y servicios pueden variar según el portal y las APIs de tu proyecto.
+
+Los errores del asistente se presentan sin volcar tokens ni respuestas Cloud completas. Para pedir ayuda comparte el mensaje de diagnóstico, sin pegar claves, identificadores completos ni el JSON importado. No es necesario ejecutar el wizard externo de TinyTuya para usar este asistente.
+
+Si una importación termina bien, el JSON de origen continúa en texto claro y no se modifica. La copia cifrada DPAPI no protege retroactivamente ese archivo. Por otro lado, un permiso Cloud vencido no impide por sí mismo usar una `local_key` LAN ya guardada y todavía válida; si vuelves a emparejar el equipo, revisa de nuevo sus credenciales.
 
 ## Captura
 
